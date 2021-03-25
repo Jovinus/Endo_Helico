@@ -6,14 +6,14 @@ from IPython.display import display
 pd.set_option("display.max_columns", None)
 # %%
 WORK_PATH = "/Users/lkh256/Studio/Endo_Helico"
-df_script = datatable.fread(os.path.join(WORK_PATH, "data/endo_biopsy_2011.csv"), 
+df_script = datatable.fread(os.path.join(WORK_PATH, "data/endo_biopsy_2008to2020.csv"), 
                             na_strings=['', 'NA'], encoding='utf-8-sig').to_pandas()
 df_script['SM_DATE'] = df_script['처방일자#5'].astype('datetime64')
 df_script['EXEC_TIME'] = df_script['시행일시#6'].astype('datetime64')
 print("Number of case = {}".format(len(df_script)))
 display(df_script.head())
 
-df_results = datatable.fread(os.path.join(WORK_PATH, "data/heli_results_2011.csv"),
+df_results = datatable.fread(os.path.join(WORK_PATH, "data/heli_results_2008to2020.csv"),
                              na_strings=['', 'NA'], encoding='utf-8-sig').to_pandas()
 df_results['SM_DATE'] = df_results['처방일자#2'].astype('datetime64')
 print("Number of case = {}".format(len(df_results)))
@@ -40,6 +40,11 @@ df_all.rename(columns=col_nm_to_ch, inplace=True)
 col_to_select = ['ID', 'SM_DATE', 'EXEC_TIME','처방코드', 'result_text', 'h_pyl_positive']
 df_select = df_all[col_to_select].copy()
 df_select.head()
+
+#%% Save data for statics
+
+### temporary data saving for stats
+df_select.to_csv(os.path.join(WORK_PATH, 'prepro_data/h_pylori_tmp.csv'), index=False, encoding='utf-8-sig')
 # %% Strip the unnecessary patterns
 
 #### Add pattern to strip. Below codes are just brief ones.
@@ -47,4 +52,3 @@ df_select['result_text'] = df_select['result_text'].apply(lambda x: x.split(sep=
 display(df_select.head())
 # %% Save Data
 df_select.to_csv(os.path.join(WORK_PATH, 'prepro_data/helico_validation.csv'), index=False, encoding='utf-8-sig')
-# %%
