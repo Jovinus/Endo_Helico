@@ -27,11 +27,14 @@ df_results = datatable.fread(os.path.join(WORK_PATH, "data/heli_results_2008to20
 df_results['SM_DATE'] = df_results['처방일자#2'].astype('datetime64')
 print("Number of case = {}".format(len(df_results)))
 display(df_results.head())
+
 # %% Data Sample 
-#### Plot sample data
+#### Print sample data
 print(df_script['검사결과내용#9'].head(1).values)
+
 # %% Check result dataset
 df_results['건강검진결과명#6'].value_counts()
+
 # %% Merge script data with results
 df_all = pd.merge(df_script, df_results, how='left', left_on=['환자번호#1', 'SM_DATE'],
                   right_on=['환자번호#1', 'SM_DATE'])
@@ -64,7 +67,7 @@ print(tmp)
 print(re.sub(r'\s+', ' ', re.sub(rm_pattern, '', tmp)))
 
 def remove_pattern(x):
-    rm_pattern = r"[=]|[-]|[▣]|[가-힣]|[\n]|[\r]|[(\d)]"
+    rm_pattern = re.compile("[=]|[-]|[▣]|[가-힣]|[\n]|[\r]|[()]")
     if x == 'nan':
         return np.nan
     else:
@@ -82,3 +85,4 @@ display(df_select.head())
 
 # %% Save Data
 df_select.to_csv(os.path.join(WORK_PATH, 'prepro_data/helico_preprocessed.csv'), index=False, encoding='utf-8-sig')
+# %%
