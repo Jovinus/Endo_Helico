@@ -86,3 +86,77 @@ def preprocessing(WORK_PATH, SAVE_PATH, input_file_name, input_file_name_2,outpu
     # %% Save Data
     df_select.to_csv(os.path.join(SAVE_PATH, output_file_name), index=False, encoding='utf-8-sig')
     return df_select
+
+def preprocessing_2(WORK_PATH, SAVE_PATH, input_file_name, input_file_name_2,output_file_name):
+    #### Read script data that we want to classify 
+    df_script = datatable.fread(os.path.join(WORK_PATH, "data/" + input_file_name), 
+                                na_strings=['', 'NA'], encoding='utf-8-sig').to_pandas()
+
+    #### Change data type to datetime64 from object
+    column_mask = ['처방일자#5', '시행일시#6']
+    df_script[['SM_DATE', 'EXEC_TIME']] = df_script[column_mask].astype('datetime64')
+    print("Number of case = {}".format(len(df_script)))
+    display(df_script.head())
+
+
+    #### Read label data
+    df_results = datatable.fread(os.path.join(WORK_PATH, "data/outcome/" + input_file_name_2),
+                                na_strings=['', 'NA'], encoding='utf-8-sig').to_pandas()
+    #### Change data type to datetime64 from object
+    df_results['SM_DATE'] = df_results['처방일자#2'].astype('datetime64')
+    print("Number of case = {}".format(len(df_results)))
+    display(df_results.head())
+
+    # %% Data Sample 
+    #### Print sample data
+    print(df_script['검사결과내용#9'].head(1).values)
+
+    # %% Merge script data with outcomes
+    df_all = pd.merge(df_script, df_results, how='left', left_on=['환자번호#1', 'SM_DATE'],
+                    right_on=['환자번호#1', 'SM_DATE'])
+
+    display(df_all.head())
+
+    # %% Drop the unnesseary columns
+    col_to_drop = ['처방일자#2', '결론진단내용#10', '처방일자#5']
+    df_all.drop(columns=col_to_drop, inplace=True)
+    display(df_all.head())
+
+    # %% Change column order and name
+    col_nm_to_ch = {'환자번호#1':'ID', '검사결과내용#9':'result_text', '처방코드#3':'처방코드'}
+    df_all.rename(columns=col_nm_to_ch, inplace=True)
+
+    # %% Selct necessary columns
+    print(df_results.columns)
+    col_to_select = ['ID', 'SM_DATE', 'EXEC_TIME','처방코드', 'result_text'] + list(df_results.columns[2:-1])
+    df_select = df_all[col_to_select].copy()
+    df_select.head()
+
+    # %% Strip the unnecessary patterns
+    #### Define pattern to remove
+    rm_pattern = r"[=]|[-]|[▣]|[가-힣]|[\n]|[\r]|[(\d)]"
+    tmp = df_script['검사결과내용#9'].head(1).values[0]
+    print(tmp)
+    #### Check pattern works
+    print(re.sub(r'\s+', ' ', re.sub(rm_pattern, '', tmp)))
+
+    def remove_pattern(x):
+        rm_pattern = re.compile("[=]|[-]|[▣]|[가-힣]|[\n]|[\r]|[()]")
+        if x == 'nan':
+            return np.nan
+        else:
+            #### remove special characters
+            x = re.sub(rm_pattern, ' ', x)
+            #### subsitute multiple white space to single white space
+            x = re.sub(r'\s+', ' ', x)
+            return x
+
+    print(remove_pattern(df_script['검사결과내용#9'].head(1).values[0]))
+    # %% Preprocessing the data
+
+    df_select['text_processed'] = df_select['result_text'].apply(lambda x: remove_pattern(str(x)))
+    display(df_select.head())
+
+    # %% Save Data
+    df_select.to_csv(os.path.join(SAVE_PATH, output_file_name), index=False, encoding='utf-8-sig')
+    return df_select
